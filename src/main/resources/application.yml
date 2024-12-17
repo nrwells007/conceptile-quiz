@@ -1,0 +1,23 @@
+server:
+  port: 9000
+
+logging:
+  level:
+    'com.conceptile.quiz': INFO
+
+spring:
+  application:
+    name: quiz
+  profiles:
+    active: default
+  data:
+    mongodb:
+      api:
+        uri: mongodb://localhost:27017/test
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    enabled: true
+
+question:
+  count: 10

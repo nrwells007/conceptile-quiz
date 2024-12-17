@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Interactive Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { text-align: center; }
+        .question { margin: 20px 0; }
+        .options label { display: block; margin: 5px; }
+        .submit-btn, .next-btn { margin-top: 10px; padding: 5px 10px; }
+        .answer { margin-top: 10px; color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+<h1>Interactive Quiz</h1>
+<div th:if="${questions}" th:each="question, questionStat : ${questions}" class="question"
+     th:style="${questionStat.index == 0} ? 'display:block' : 'display:none'"
+     th:id="'question-' + ${questionStat.index}">
+
+    <h2 th:text="${question.question}">Question</h2>
+
+    <div class="options">
+        <label th:each="option : ${question.options}">
+            <input type="radio" th:name="'answer-' + ${questionStat.index}" th:value="${option}" />
+            <span th:text="${option}">Option</span>
+        </label>
+    </div>
+
+    <button class="submit-btn" onclick="checkAnswer(this)"
+            th:data-correct="${question.correctAnswer}">
+        Submit
+    </button>
+    <div class="answer" style="display:none;"></div>
+</div>
+
+<button class="next-btn" onclick="nextQuestion()" style="display:none;">Next Question</button>
+
+<script>
+    let currentQuestionIndex = 0;
+    const questions = document.querySelectorAll('.question');
+    const nextButton = document.querySelector('.next-btn');
+
+    function checkAnswer(button) {
+        const correctAnswer = button.getAttribute('data-correct');
+        const selectedOption = document.querySelector(
+            `input[name="answer-${currentQuestionIndex}"]:checked`
+        );
+        const answerDiv = button.nextElementSibling;
+
+        if (selectedOption) {
+            if (selectedOption.value === correctAnswer) {
+                answerDiv.textContent = "🎉 Correct!";
+            } else {
+                answerDiv.textContent = "❌ Wrong! Correct Answer: " + correctAnswer;
+            }
+            answerDiv.style.display = "block";
+            button.disabled = true;
+            nextButton.style.display = "inline-block";
+        } else {
+            alert("Please select an option!");
+        }
+    }
+
+    function nextQuestion() {
+        questions[currentQuestionIndex].style.display = "none";
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            questions[currentQuestionIndex].style.display = "block";
+            nextButton.style.display = "none";
+        } else {
+            document.body.innerHTML += "<h2>🎉 Quiz Completed! 🎉</h2>";
+            nextButton.style.display = "none";
+        }
+    }
+</script>
+</body>
+</html>
