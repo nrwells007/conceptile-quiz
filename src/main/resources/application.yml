@@ -12,8 +12,7 @@ spring:
     active: default
   data:
     mongodb:
-      api:
-        uri: mongodb://localhost:27017/test
+      uri: mongodb+srv://conceptilequizv1:NTeXRhkerjAXU4F2@cluster0.eingv.mongodb.net/conceptile?retryWrites=true&w=majority&appName=Cluster0
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
