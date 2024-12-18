@@ -1,7 +1,9 @@
 package com.conceptile.quiz.service.impl;
 
 import com.conceptile.quiz.entity.QuestionEntity;
+import com.conceptile.quiz.entity.ScoreEntity;
 import com.conceptile.quiz.repository.QuizRepository;
+import com.conceptile.quiz.repository.ScoreRepository;
 import com.conceptile.quiz.service.QuizService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,43 +29,39 @@ public class QuizServiceImpl implements QuizService {
     private int count;
 
     private final QuizRepository quizRepository;
-
+    private final ScoreRepository scoreRepository; // Add ScoreRepository
     private final ObjectMapper objectMapper;
-
     private final MongoTemplate mongoTemplate;
 
-    public QuizServiceImpl (QuizRepository quizRepository, ObjectMapper objectMapper, MongoTemplate mongoTemplate) {
+    public QuizServiceImpl(QuizRepository quizRepository,
+                           ObjectMapper objectMapper,
+                           MongoTemplate mongoTemplate,
+                           ScoreRepository scoreRepository) { // Include ScoreRepository
         this.quizRepository = quizRepository;
         this.objectMapper = objectMapper;
         this.mongoTemplate = mongoTemplate;
+        this.scoreRepository = scoreRepository; // Initialize ScoreRepository
     }
 
     @Override
     public void upsertQuestionsFromJson() throws IOException {
-        // Load JSON file from the classpath
         InputStream inputStream = new ClassPathResource("questionAnswer.json").getInputStream();
         List<QuestionEntity> questions = objectMapper.readValue(inputStream, new TypeReference<List<QuestionEntity>>() {});
         log.info("Loaded questions from JSON: {}", questions);
 
-        // Upsert logic: Check if ID exists, then update or insert
         for (QuestionEntity question : questions) {
-            log.info("Processing question with ID: {}", question.getId());
             Optional<QuestionEntity> existingQuestion = quizRepository.findById(question.getId());
 
             if (existingQuestion.isPresent()) {
-                log.info("Updating existing question with ID: {}", question.getId());
                 QuestionEntity existing = existingQuestion.get();
                 existing.setQuestion(question.getQuestion());
                 existing.setOptions(question.getOptions());
                 existing.setCorrectAnswer(question.getCorrectAnswer());
                 quizRepository.save(existing);
             } else {
-                log.info("Inserting new question with ID: {}", question.getId());
                 quizRepository.save(question);
             }
         }
-
-        log.info("All questions processed successfully!");
     }
 
     @Override
@@ -73,7 +71,6 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     public List<QuestionEntity> getRandomQuestions() {
-        // MongoDB Aggregation to fetch random 'count' documents
         SampleOperation sampleStage = Aggregation.sample(count);
         Aggregation aggregation = Aggregation.newAggregation(sampleStage);
 
@@ -81,5 +78,18 @@ public class QuizServiceImpl implements QuizService {
                 aggregation, "questions", QuestionEntity.class);
 
         return results.getMappedResults();
+    }
+
+    @Override
+    public void saveUserScore(String username, int score) {
+        ScoreEntity scoreEntity = new ScoreEntity();
+        scoreEntity.setUsername(username);
+        scoreEntity.setScore(score);
+        scoreRepository.save(scoreEntity); // Corrected to use ScoreRepository
+    }
+
+    @Override
+    public ScoreEntity getHighestScore() {
+        return scoreRepository.findTopByOrderByScoreDesc(); // Corrected to use ScoreRepository
     }
 }
